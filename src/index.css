@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --neo-shadow-light: 20px 20px 60px #d1d1d1, -20px -20px 60px #ffffff;
+  --neo-shadow-dark: 20px 20px 60px #1a1a1a, -20px -20px 60px #2d2d2d;
+  --neo-inner-light: inset 5px 5px 10px #d1d1d1, inset -5px -5px 10px #ffffff;
+  --neo-inner-dark: inset 5px 5px 10px #1a1a1a, inset -5px -5px 10px #2d2d2d;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.dark {
+  color-scheme: dark;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* Neomorphic Styles */
+.neo-button {
+  @apply transition-all duration-300;
+}
+
+.neo-button:hover {
+  @apply transform scale-105;
+}
+
+.dark .neo-card {
+  @apply bg-dark-card shadow-neo-dark;
+}
+
+.neo-card {
+  @apply bg-white shadow-neo-light;
+}
