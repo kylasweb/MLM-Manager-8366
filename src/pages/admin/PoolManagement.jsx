@@ -5,6 +5,8 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useAdmin } from '../../hooks/useAdmin';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import ConfirmDialog from '../../components/ConfirmDialog';
+import PoolFormModal from '../../components/pools/PoolFormModal';
+import { toast } from 'react-toastify';
 
 function PoolManagement() {
   const { darkMode } = useTheme();
@@ -32,13 +34,30 @@ function PoolManagement() {
     setShowConfirmDelete(true);
   };
 
+  const handleSubmit = async (formData) => {
+    try {
+      if (selectedPool) {
+        await updatePool(selectedPool.id, formData);
+        toast.success('Pool updated successfully');
+      } else {
+        await createPool(formData);
+        toast.success('Pool created successfully');
+      }
+      setIsModalOpen(false);
+      setSelectedPool(null);
+    } catch (error) {
+      toast.error(error.message || 'Failed to save pool');
+    }
+  };
+
   const confirmDelete = async () => {
     try {
       await deletePool(selectedPool.id);
+      toast.success('Pool deleted successfully');
       setShowConfirmDelete(false);
       setSelectedPool(null);
     } catch (error) {
-      console.error('Failed to delete pool:', error);
+      toast.error(error.message || 'Failed to delete pool');
     }
   };
 
@@ -121,13 +140,31 @@ function PoolManagement() {
                 </span>
               </div>
               <div className="flex justify-between">
+                <span className={darkMode ? 'text-gray-300' : 'text-gray-600'}>Entry Fee</span>
+                <span className={darkMode ? 'text-white' : 'text-gray-900'}>
+                  ${pool.entryFee}
+                </span>
+              </div>
+              <div className="flex justify-between">
                 <span className={darkMode ? 'text-gray-300' : 'text-gray-600'}>Start Date</span>
-                <span className={darkMode ? 'text-white' : 'text-gray-900'}>{pool.startDate}</span>
+                <span className={darkMode ? 'text-white' : 'text-gray-900'}>
+                  {new Date(pool.startDate).toLocaleDateString()}
+                </span>
               </div>
             </div>
           </div>
         ))}
       </div>
+
+      <PoolFormModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedPool(null);
+        }}
+        onSubmit={handleSubmit}
+        pool={selectedPool}
+      />
 
       <ConfirmDialog
         isOpen={showConfirmDelete}
