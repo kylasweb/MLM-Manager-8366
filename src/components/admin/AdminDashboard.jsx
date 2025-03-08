@@ -5,11 +5,14 @@ import {
   BankOutlined,
   AppstoreOutlined,
   SettingOutlined,
+  CodeOutlined,
+  ExperimentOutlined,
 } from '@ant-design/icons';
 import UserManagement from './UserManagement';
 import InvestmentManagement from './InvestmentManagement';
 import PoolManagement from './PoolManagement';
 import SystemSettings from './SystemSettings';
+import UATEngine from './UATEngine';
 
 const { Content, Sider } = Layout;
 
@@ -37,6 +40,11 @@ const AdminDashboard = () => {
       icon: <SettingOutlined />,
       label: 'System Settings',
     },
+    {
+      key: '5',
+      icon: <ExperimentOutlined />,
+      label: 'User Acceptance Testing',
+    },
   ];
 
   const renderContent = () => {
@@ -49,6 +57,8 @@ const AdminDashboard = () => {
         return <PoolManagement />;
       case '4':
         return <SystemSettings />;
+      case '5':
+        return <UATEngine />;
       default:
         return <UserManagement />;
     }

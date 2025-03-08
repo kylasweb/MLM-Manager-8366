@@ -277,7 +277,19 @@ export const mockApi = {
         });
       }
     }, 120000); // Every 2 minutes
-  }
+  },
+
+  submitUATAction: async (payload) => {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    if (!payload.stealth) {
+      console.log('UAT action executed:', {
+        ...payload,
+        userId: payload.userId ? 'REDACTED' : undefined,
+        userIds: payload.userIds ? 'REDACTED' : undefined
+      });
+    }
+    return { success: true };
+  },
 };
 
 // Mock WebSocket connection
