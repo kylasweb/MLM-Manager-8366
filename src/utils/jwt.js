@@ -1,4 +1,5 @@
-import jwt from 'jsonwebtoken';
+import { jwtDecode } from 'jwt-decode';
+import axios from 'axios';
 
 const JWT_SECRET = 'MLM_JWT_SECRET_2024'; // In production, this should be an environment variable
 const JWT_REFRESH_SECRET = 'MLM_JWT_REFRESH_SECRET_2024'; // In production, this should be an environment variable
@@ -72,7 +73,7 @@ export const isValidToken = (token) => {
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = jwtDecode(token);
     const currentTime = Date.now() / 1000;
     
     // Check if token is expired
@@ -120,7 +121,7 @@ export const getSession = () => {
  */
 export const decodeToken = (token) => {
   try {
-    return jwt.decode(token);
+    return jwtDecode(token);
   } catch {
     return null;
   }
@@ -133,7 +134,7 @@ export const decodeToken = (token) => {
  */
 export const getTokenExpiryTime = (token) => {
   try {
-    const decoded = jwt.decode(token);
+    const decoded = jwtDecode(token);
     if (!decoded) return 0;
     
     const currentTime = Date.now() / 1000;

@@ -10,6 +10,20 @@ const SESSION_TIMEOUT = 3600000; // 1 hour in milliseconds
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCKOUT_DURATION = 900000; // 15 minutes in milliseconds
 
+const storage = {
+  getItem: (name) => {
+    const str = localStorage.getItem(name);
+    if (!str) return null;
+    return JSON.parse(str);
+  },
+  setItem: (name, value) => {
+    localStorage.setItem(name, JSON.stringify(value));
+  },
+  removeItem: (name) => {
+    localStorage.removeItem(name);
+  }
+};
+
 const useAuthStore = create(
   persist(
     (set, get) => ({
@@ -340,11 +354,7 @@ const useAuthStore = create(
     }),
     {
       name: 'auth-storage',
-      partialize: (state) => ({ 
-        token: state.token,
-        lastActivity: state.lastActivity,
-        loginAttempts: state.loginAttempts
-      })
+      storage
     }
   )
 );

@@ -1,4 +1,4 @@
-import CryptoJS from 'crypto-js';
+import CryptoES from 'crypto-es';
 
 const ENCRYPTION_KEY = 'MLM_SECURE_KEY_2024'; // In production, this should be an environment variable
 
@@ -10,7 +10,7 @@ const ENCRYPTION_KEY = 'MLM_SECURE_KEY_2024'; // In production, this should be a
 export const encryptData = (data) => {
   try {
     const jsonString = JSON.stringify(data);
-    return CryptoJS.AES.encrypt(jsonString, ENCRYPTION_KEY).toString();
+    return CryptoES.AES.encrypt(jsonString, ENCRYPTION_KEY).toString();
   } catch (error) {
     console.error('Encryption failed:', error);
     throw new Error('Failed to encrypt data');
@@ -24,8 +24,8 @@ export const encryptData = (data) => {
  */
 export const decryptData = (encryptedData) => {
   try {
-    const bytes = CryptoJS.AES.decrypt(encryptedData, ENCRYPTION_KEY);
-    const decryptedString = bytes.toString(CryptoJS.enc.Utf8);
+    const bytes = CryptoES.AES.decrypt(encryptedData, ENCRYPTION_KEY);
+    const decryptedString = bytes.toString(CryptoES.enc.Utf8);
     return JSON.parse(decryptedString);
   } catch (error) {
     console.error('Decryption failed:', error);
@@ -40,7 +40,7 @@ export const decryptData = (encryptedData) => {
  */
 export const hashPassword = (password) => {
   try {
-    return CryptoJS.SHA256(password).toString();
+    return CryptoES.SHA256(password).toString();
   } catch (error) {
     console.error('Password hashing failed:', error);
     throw new Error('Failed to hash password');
@@ -54,7 +54,7 @@ export const hashPassword = (password) => {
  */
 export const generateSalt = (length = 16) => {
   try {
-    return CryptoJS.lib.WordArray.random(length).toString();
+    return CryptoES.lib.WordArray.random(length).toString();
   } catch (error) {
     console.error('Salt generation failed:', error);
     throw new Error('Failed to generate salt');
@@ -69,7 +69,7 @@ export const generateSalt = (length = 16) => {
  */
 export const verifyPassword = (password, hash) => {
   try {
-    const computedHash = CryptoJS.SHA256(password).toString();
+    const computedHash = CryptoES.SHA256(password).toString();
     return computedHash === hash;
   } catch (error) {
     console.error('Password verification failed:', error);
