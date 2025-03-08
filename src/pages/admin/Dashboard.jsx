@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Line, Bar } from 'react-chartjs-2';
 import {
@@ -11,8 +12,10 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
+import { FaCog, FaBell, FaBellSlash } from 'react-icons/fa';
 import { useAdminDashboard } from '../../hooks/useAdminDashboard';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import webSocketService from '../../services/websocket';
 
 // Register ChartJS components
 ChartJS.register(
@@ -28,6 +31,22 @@ ChartJS.register(
 
 function AdminDashboard() {
   const { stats, loading, refresh } = useAdminDashboard();
+  const [showNotificationSettings, setShowNotificationSettings] = useState(false);
+  const [notificationSettings, setNotificationSettings] = useState(webSocketService.notificationSettings);
+
+  const toggleNotifications = () => {
+    if (notificationSettings.enabled) {
+      webSocketService.disableNotifications();
+    } else {
+      webSocketService.enableNotifications();
+    }
+    setNotificationSettings(webSocketService.notificationSettings);
+  };
+
+  const toggleNotificationType = (type) => {
+    webSocketService.toggleNotificationType(type, !notificationSettings.types[type]);
+    setNotificationSettings({ ...webSocketService.notificationSettings });
+  };
 
   if (loading) {
     return <LoadingSpinner />;
@@ -70,14 +89,81 @@ function AdminDashboard() {
     >
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-        <button
-          onClick={refresh}
-          className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
-        >
-          Refresh Data
-        </button>
+        <div className="flex items-center space-x-4">
+          <button
+            onClick={() => setShowNotificationSettings(!showNotificationSettings)}
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+            title="Notification Settings"
+          >
+            <FaCog className="text-xl" />
+          </button>
+          <button
+            onClick={toggleNotifications}
+            className={`p-2 rounded-lg ${
+              notificationSettings.enabled
+                ? 'text-primary-600 hover:text-primary-700'
+                : 'text-gray-400 hover:text-gray-500'
+            }`}
+            title={notificationSettings.enabled ? 'Disable Notifications' : 'Enable Notifications'}
+          >
+            {notificationSettings.enabled ? <FaBell /> : <FaBellSlash />}
+          </button>
+          <button
+            onClick={refresh}
+            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+          >
+            Refresh Data
+          </button>
+        </div>
       </div>
       
+      {showNotificationSettings && (
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h2 className="text-lg font-bold mb-4">Notification Settings</h2>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <span>Connection Notifications</span>
+              <button
+                onClick={() => toggleNotificationType('connection')}
+                className={`px-3 py-1 rounded-full ${
+                  notificationSettings.types.connection
+                    ? 'bg-primary-100 text-primary-800'
+                    : 'bg-gray-100 text-gray-800'
+                }`}
+              >
+                {notificationSettings.types.connection ? 'Enabled' : 'Disabled'}
+              </button>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>System Notifications</span>
+              <button
+                onClick={() => toggleNotificationType('system')}
+                className={`px-3 py-1 rounded-full ${
+                  notificationSettings.types.system
+                    ? 'bg-primary-100 text-primary-800'
+                    : 'bg-gray-100 text-gray-800'
+                }`}
+              >
+                {notificationSettings.types.system ? 'Enabled' : 'Disabled'}
+              </button>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>Business Notifications</span>
+              <button
+                onClick={() => toggleNotificationType('business')}
+                className={`px-3 py-1 rounded-full ${
+                  notificationSettings.types.business
+                    ? 'bg-primary-100 text-primary-800'
+                    : 'bg-gray-100 text-gray-800'
+                }`}
+              >
+                {notificationSettings.types.business ? 'Enabled' : 'Disabled'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Admin Stats */}
         <div className="bg-white p-6 rounded-lg shadow">

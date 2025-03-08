@@ -1,5 +1,11 @@
-export const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
-export const WS_BASE_URL = process.env.REACT_APP_WS_URL || 'ws://localhost:8000';
+// API Configuration
+export const API_BASE_URL = process.env.NODE_ENV === 'development' 
+  ? 'http://localhost:8000/api'  // Development API URL
+  : process.env.REACT_APP_API_URL || 'https://api.yourdomain.com/api'; // Production API URL
+
+export const WS_BASE_URL = process.env.NODE_ENV === 'development'
+  ? 'ws://localhost:8000'  // Development WebSocket URL
+  : process.env.REACT_APP_WS_URL || 'wss://api.yourdomain.com'; // Production WebSocket URL
 
 export const API_TIMEOUT = 30000; // 30 seconds
 
@@ -61,4 +67,9 @@ export const NETWORK_LEVELS = {
     4: 2,  // 2% for level 4
     5: 1   // 1% for level 5
   }
-}; 
+};
+
+// Development Mode Settings
+export const IS_DEVELOPMENT = process.env.NODE_ENV === 'development';
+export const USE_MOCK_DATA = IS_DEVELOPMENT && !process.env.REACT_APP_USE_REAL_API;
+export const MOCK_API_DELAY = 1000; // 1 second delay for mock data in development 
