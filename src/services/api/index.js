@@ -13,8 +13,50 @@ export const api = createApi({
       return headers;
     },
   }),
-  tagTypes: ['User', 'Investment', 'Pool', 'Wallet', 'Transaction'],
+  tagTypes: ['User', 'Investment', 'Pool', 'Wallet', 'Transaction', 'Network', 'Referral', 'AdminReferral'],
   endpoints: (builder) => ({
+    // Admin Referral Management
+    getAdminReferralStats: builder.query({
+      query: () => '/admin/referrals/stats',
+      providesTags: ['AdminReferral'],
+    }),
+    updateReferralSettings: builder.mutation({
+      query: (data) => ({
+        url: '/admin/referrals/settings',
+        method: 'PUT',
+        body: data,
+      }),
+      invalidatesTags: ['AdminReferral'],
+    }),
+    assignSponsor: builder.mutation({
+      query: ({ userId, sponsorId }) => ({
+        url: '/admin/referrals/assign-sponsor',
+        method: 'POST',
+        body: { userId, sponsorId },
+      }),
+      invalidatesTags: ['AdminReferral', 'Network'],
+    }),
+    generateSponsorId: builder.mutation({
+      query: (userId) => ({
+        url: '/admin/referrals/generate-sponsor-id',
+        method: 'POST',
+        body: { userId },
+      }),
+      invalidatesTags: ['AdminReferral', 'User'],
+    }),
+    updateBusinessVolume: builder.mutation({
+      query: ({ userId, type, amount }) => ({
+        url: '/admin/referrals/business-volume',
+        method: 'POST',
+        body: { userId, type, amount },
+      }),
+      invalidatesTags: ['AdminReferral', 'Network'],
+    }),
+    getBusinessVolumeHistory: builder.query({
+      query: (userId) => `/admin/referrals/business-volume/${userId}`,
+      providesTags: ['AdminReferral'],
+    }),
+
     // Auth endpoints
     login: builder.mutation({
       query: (credentials) => ({
@@ -27,7 +69,10 @@ export const api = createApi({
       query: (userData) => ({
         url: '/auth/register',
         method: 'POST',
-        body: userData,
+        body: {
+          ...userData,
+          sponsorId: userData.sponsorId || null, // Make sponsor ID optional during registration
+        },
       }),
     }),
 
@@ -45,6 +90,52 @@ export const api = createApi({
       invalidatesTags: ['User'],
     }),
 
+    // Referral endpoints
+    getReferralStats: builder.query({
+      query: () => '/referrals/stats',
+      providesTags: ['Referral'],
+    }),
+    getReferralHistory: builder.query({
+      query: (params) => ({
+        url: '/referrals/history',
+        params,
+      }),
+      providesTags: ['Referral'],
+    }),
+    getReferralLink: builder.query({
+      query: () => '/referrals/link',
+      providesTags: ['Referral'],
+    }),
+    createReferral: builder.mutation({
+      query: (data) => ({
+        url: '/referrals',
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: ['Referral', 'Network', 'Wallet'],
+    }),
+    validateReferralCode: builder.query({
+      query: (code) => `/referrals/validate/${code}`,
+    }),
+    getReferralCommissions: builder.query({
+      query: () => '/referrals/commissions',
+      providesTags: ['Referral'],
+    }),
+
+    // Network endpoints
+    getNetwork: builder.query({
+      query: () => '/network/tree',
+      providesTags: ['Network'],
+    }),
+    getNetworkMatrix: builder.query({
+      query: () => '/network/matrix',
+      providesTags: ['Network'],
+    }),
+    getNetworkStats: builder.query({
+      query: () => '/network/stats',
+      providesTags: ['Network'],
+    }),
+
     // Investment endpoints
     getInvestments: builder.query({
       query: () => '/investments',
@@ -56,7 +147,7 @@ export const api = createApi({
         method: 'POST',
         body: data,
       }),
-      invalidatesTags: ['Investment', 'Wallet'],
+      invalidatesTags: ['Investment', 'Wallet', 'Network'],
     }),
 
     // Pool endpoints
@@ -69,7 +160,7 @@ export const api = createApi({
         url: `/pools/${poolId}/join`,
         method: 'POST',
       }),
-      invalidatesTags: ['Pool', 'Investment'],
+      invalidatesTags: ['Pool', 'Investment', 'Network'],
     }),
 
     // Wallet endpoints
@@ -96,10 +187,25 @@ export const api = createApi({
 });
 
 export const {
+  useGetAdminReferralStatsQuery,
+  useUpdateReferralSettingsMutation,
+  useAssignSponsorMutation,
+  useGenerateSponsorIdMutation,
+  useUpdateBusinessVolumeMutation,
+  useGetBusinessVolumeHistoryQuery,
   useLoginMutation,
   useRegisterMutation,
   useGetProfileQuery,
   useUpdateProfileMutation,
+  useGetReferralStatsQuery,
+  useGetReferralHistoryQuery,
+  useGetReferralLinkQuery,
+  useCreateReferralMutation,
+  useValidateReferralCodeQuery,
+  useGetReferralCommissionsQuery,
+  useGetNetworkQuery,
+  useGetNetworkMatrixQuery,
+  useGetNetworkStatsQuery,
   useGetInvestmentsQuery,
   useCreateInvestmentMutation,
   useGetPoolsQuery,
