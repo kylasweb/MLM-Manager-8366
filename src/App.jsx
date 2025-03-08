@@ -21,11 +21,6 @@ const Referrals = lazy(() => import('./pages/Referrals'));
 
 // Admin pages
 const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
-const UserManagement = lazy(() => import('./pages/admin/UserManagement'));
-const InvestmentPlans = lazy(() => import('./pages/admin/InvestmentPlans'));
-const PoolManagement = lazy(() => import('./pages/admin/PoolManagement'));
-const FinanceManagement = lazy(() => import('./pages/admin/FinanceManagement'));
-const Settings = lazy(() => import('./pages/admin/Settings'));
 
 import { useAuthContext } from './contexts/AuthContext';
 
@@ -60,11 +55,6 @@ function App() {
             {/* Protected Admin Routes */}
             <Route path="/admin" element={<AdminRoute><Layout /></AdminRoute>}>
               <Route index element={<AdminDashboard />} />
-              <Route path="users" element={<UserManagement />} />
-              <Route path="investments" element={<InvestmentPlans />} />
-              <Route path="pools" element={<PoolManagement />} />
-              <Route path="finance" element={<FinanceManagement />} />
-              <Route path="settings" element={<Settings />} />
             </Route>
           </Routes>
         </Suspense>
