@@ -50,7 +50,7 @@ const App = lazy(() => {
 });
 
 // Import the other components directly to avoid potential issues
-import ThemeProvider from './contexts/ThemeContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { ToastContainer } from 'react-toastify';
 
 // Import CSS separately to avoid blocking render
