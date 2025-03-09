@@ -4,6 +4,7 @@ import { AnimatePresence } from 'framer-motion';
 import LoadingSpinner from './components/LoadingSpinner';
 import ErrorBoundary from './components/ErrorBoundary';
 import useAuth from './hooks/useAuth';
+import PerformanceDashboard from './components/PerformanceDashboard';
 
 // Import Login directly to avoid lazy loading issues
 import Login from './pages/Login';
@@ -145,6 +146,9 @@ const App = memo(() => {
           </Routes>
         </Suspense>
       </AnimatePresence>
+      
+      {/* Performance Dashboard */}
+      {process.env.NODE_ENV !== 'production' && <PerformanceDashboard />}
     </ErrorBoundary>
   );
 });

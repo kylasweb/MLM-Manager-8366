@@ -1,3 +1,7 @@
+// Add performance tracking to main initialization
+const startTime = performance.now();
+console.log('[Performance] App initialization started');
+
 import { StrictMode, lazy, Suspense, useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { HashRouter } from 'react-router-dom';
@@ -6,8 +10,13 @@ import { PersistGate } from 'redux-persist/integration/react';
 import { store, persistor } from './store/store';
 import './index.css';
 
-// Performance monitoring
+// Debug flag
 const DEBUG = true;
+
+// Performance monitoring
+if (DEBUG) {
+  console.log(`[Performance] Modules imported: ${(performance.now() - startTime).toFixed(2)}ms`);
+}
 
 // Prevent React DevTools in production
 if (process.env.NODE_ENV === 'production') {
@@ -119,6 +128,19 @@ const SafeAppWrapper = () => {
   }
   
   try {
+    // Track render performance
+    const renderStart = performance.now();
+    if (DEBUG) console.log('[Performance] Starting render');
+    
+    // Monitor Redux store rehydration
+    const unsubscribe = persistor.subscribe(() => {
+      const persistorState = persistor.getState();
+      if (persistorState.bootstrapped) {
+        if (DEBUG) console.log(`[Performance] Redux store rehydrated: ${(performance.now() - renderStart).toFixed(2)}ms`);
+        unsubscribe();
+      }
+    });
+    
     return (
       <StrictMode>
         <Provider store={store}>
@@ -159,3 +181,9 @@ const root = createRoot(document.getElementById('root'));
 // Render with performance optimization
 if (DEBUG) window.markPerf('Rendering started');
 root.render(<SafeAppWrapper />);
+
+// Track total initialization time
+window.addEventListener('load', () => {
+  const totalTime = performance.now() - startTime;
+  console.log(`[Performance] Total app initialization: ${totalTime.toFixed(2)}ms`);
+});

@@ -2,11 +2,15 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
 import { toast } from 'react-toastify';
+import { withPerformanceTracking, trackPagePerformance } from '../utils/performanceMonitor';
 
 // Debug flag
 const DEBUG = true;
 
 function Login() {
+  // Start page performance tracking
+  const endTracking = trackPagePerformance('Login');
+  
   if (DEBUG) console.log('Login component rendering');
 
   const [credentials, setCredentials] = useState({ email: '', password: '' });
@@ -23,7 +27,12 @@ function Login() {
       // Use setTimeout to avoid potential navigation issues
       setTimeout(() => navigate('/dashboard'), 0);
     }
-  }, [isAuthenticated, navigate]);
+    
+    // End performance tracking when component is fully rendered
+    return () => {
+      endTracking();
+    };
+  }, [isAuthenticated, navigate, endTracking]);
 
   // Memoize handler to avoid recreation on every render
   const handleSubmit = useCallback(async (e) => {
@@ -31,6 +40,7 @@ function Login() {
     
     if (DEBUG) console.log('Login form submitted');
     
+    const startTime = performance.now();
     setIsLoading(true);
     try {
       if (DEBUG) console.log('Attempting login with:', { email: credentials.email });
@@ -42,6 +52,8 @@ function Login() {
       toast.error(err?.message || 'Login failed. Please try again.');
     } finally {
       setIsLoading(false);
+      const endTime = performance.now();
+      if (DEBUG) console.log(`Login request took ${(endTime - startTime).toFixed(2)}ms`);
     }
   }, [credentials, login]);
 
@@ -124,4 +136,5 @@ function Login() {
   );
 }
 
-export default Login;
+// Wrap the component with performance tracking
+export default withPerformanceTracking(Login, 'LoginComponent');
