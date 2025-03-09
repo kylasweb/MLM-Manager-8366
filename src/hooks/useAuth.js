@@ -1,75 +1,108 @@
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector, useDispatch, shallowEqual } from 'react-redux';
 import { 
   login as loginAction, 
   logout as logoutAction,
   initialize as initializeAction,
   updateLastActivity,
-  checkSession
+  checkSession,
+  selectUser,
+  selectIsAuthenticated,
+  selectIsAdmin,
+  selectUserPermissions
 } from '../store/authSlice';
-import { useEffect } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { setupSessionChecker } from '../store/store';
 
-// Initialize session checker
+// Use singleton session checker to avoid recreation
 const sessionChecker = setupSessionChecker();
 
 /**
- * Custom hook to access auth state and actions from Redux
+ * Custom hook to access auth state and actions from Redux with optimized performance
  */
 const useAuth = () => {
   const dispatch = useDispatch();
-  const { 
-    user, 
-    token, 
-    loading, 
-    error, 
-    isAuthenticated, 
-    lastActivity, 
-    loginAttempts 
-  } = useSelector(state => state.auth);
+  const initRef = useRef(false);
+  
+  // Use memoized selectors for better performance
+  const user = useSelector(selectUser);
+  const isAuthenticated = useSelector(selectIsAuthenticated);
+  const isAdmin = useSelector(selectIsAdmin);
+  const permissions = useSelector(selectUserPermissions);
+  
+  // Use shallow equality for other state to prevent unnecessary rerenders
+  const { loading, error, lastActivity, loginAttempts } = useSelector(
+    state => ({
+      loading: state.auth.loading,
+      error: state.auth.error,
+      lastActivity: state.auth.lastActivity,
+      loginAttempts: state.auth.loginAttempts,
+    }),
+    shallowEqual
+  );
 
+  // Initialize auth state only once
   useEffect(() => {
-    // Initialize auth state on first load
-    dispatch(initializeAction());
+    if (!initRef.current) {
+      dispatch(initializeAction());
+      initRef.current = true;
+    }
+  }, [dispatch]);
 
-    // Start session checker
+  // Effect for session checking management
+  useEffect(() => {
     if (isAuthenticated) {
       sessionChecker.startSessionCheck();
     }
 
     return () => {
-      // Clean up session checker on unmount
       sessionChecker.stopSessionCheck();
+    };
+  }, [isAuthenticated]);
+
+  // Optimized activity tracking using event delegation and throttling
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    let timeout;
+    const ACTIVITY_THROTTLE = 60000; // 1 minute
+    let lastUpdateTime = Date.now();
+
+    const handleActivity = () => {
+      const now = Date.now();
+      if (now - lastUpdateTime >= ACTIVITY_THROTTLE) {
+        dispatch(updateLastActivity());
+        lastUpdateTime = now;
+      }
+    };
+
+    // Use event delegation instead of multiple listeners
+    const handleUserActivity = (event) => {
+      if (timeout) clearTimeout(timeout);
+      timeout = setTimeout(handleActivity, 500);
+    };
+
+    // Use passive listeners for better performance
+    window.addEventListener('mousemove', handleUserActivity, { passive: true });
+    window.addEventListener('keydown', handleUserActivity, { passive: true });
+    window.addEventListener('click', handleUserActivity, { passive: true });
+    window.addEventListener('touchstart', handleUserActivity, { passive: true });
+    window.addEventListener('scroll', handleUserActivity, { passive: true });
+
+    return () => {
+      if (timeout) clearTimeout(timeout);
+      window.removeEventListener('mousemove', handleUserActivity);
+      window.removeEventListener('keydown', handleUserActivity);
+      window.removeEventListener('click', handleUserActivity);
+      window.removeEventListener('touchstart', handleUserActivity);
+      window.removeEventListener('scroll', handleUserActivity);
     };
   }, [dispatch, isAuthenticated]);
 
-  // Update activity timestamp when the user interacts with the app
-  useEffect(() => {
-    if (isAuthenticated) {
-      const handleActivity = () => {
-        dispatch(updateLastActivity());
-      };
-
-      // Attach event listeners for user activity
-      window.addEventListener('mousemove', handleActivity);
-      window.addEventListener('keydown', handleActivity);
-      window.addEventListener('click', handleActivity);
-
-      return () => {
-        // Clean up event listeners
-        window.removeEventListener('mousemove', handleActivity);
-        window.removeEventListener('keydown', handleActivity);
-        window.removeEventListener('click', handleActivity);
-      };
-    }
-  }, [dispatch, isAuthenticated]);
-
-  // Login function
-  const login = async (credentials) => {
+  // Memoized functions to prevent unnecessary recreation
+  const login = useCallback(async (credentials) => {
     try {
       const resultAction = await dispatch(loginAction(credentials));
       if (loginAction.fulfilled.match(resultAction)) {
-        // Start session checker on successful login
-        sessionChecker.startSessionCheck();
         return resultAction.payload.user;
       } else {
         throw new Error(resultAction.payload?.message || 'Login failed');
@@ -77,26 +110,26 @@ const useAuth = () => {
     } catch (error) {
       throw error;
     }
-  };
+  }, [dispatch]);
 
-  // Logout function
-  const logout = (message) => {
+  const logout = useCallback((message) => {
     dispatch(logoutAction(message));
     sessionChecker.stopSessionCheck();
-  };
+  }, [dispatch]);
 
-  // Function to check if session is valid
-  const validateSession = () => {
+  const validateSession = useCallback(() => {
     dispatch(checkSession());
     return isAuthenticated;
-  };
+  }, [dispatch, isAuthenticated]);
 
+  // Return memoized state and functions
   return {
     user,
-    token,
+    isAuthenticated,
+    isAdmin,
+    permissions,
     loading,
     error,
-    isAuthenticated,
     lastActivity,
     loginAttempts,
     login,

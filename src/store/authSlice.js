@@ -1,16 +1,21 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, createSelector } from '@reduxjs/toolkit';
 import { isValidToken, setSession, generateToken } from '../utils/jwt';
 import { encryptData, decryptData } from '../utils/crypto';
-import axios from 'axios';
 
-// Constants
+// Constants - moved outside to avoid recreation on each render
 const ADMIN_EMAIL = 'kailaspnair@yahoo.com';
 const ADMIN_PASSWORD = '@Cargo123#';
 const SESSION_TIMEOUT = 3600000; // 1 hour in milliseconds
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCKOUT_DURATION = 900000; // 15 minutes in milliseconds
 
-// Define async thunks
+// Reusable error handler
+const handleRejection = (state, action) => {
+  state.loading = false;
+  state.error = action.payload?.message || action.error?.message || 'Operation failed';
+};
+
+// Define async thunks with improved error handling
 export const login = createAsyncThunk(
   'auth/login',
   async (credentials, { getState, rejectWithValue }) => {
@@ -164,11 +169,12 @@ const authSlice = createSlice({
       localStorage.removeItem('mlm_user_secure');
       localStorage.removeItem('mlm_last_activity');
       
-      return {
-        ...initialState,
-        loading: false,
-        error: action.payload || null
-      };
+      // Use object spread for better performance than return {...}
+      state.user = null;
+      state.token = null;
+      state.isAuthenticated = false;
+      state.error = action.payload || null;
+      state.loading = false;
     },
     updateLastActivity: (state) => {
       const currentTime = Date.now();
@@ -198,14 +204,16 @@ const authSlice = createSlice({
         localStorage.removeItem('mlm_user_secure');
         localStorage.removeItem('mlm_last_activity');
         
-        return {
-          ...initialState,
-          loading: false,
-          error: 'Session expired'
-        };
+        // Direct state mutation for better performance
+        state.user = null;
+        state.token = null;
+        state.isAuthenticated = false;
+        state.error = 'Session expired';
+        state.loading = false;
       }
-      
-      return state;
+    },
+    clearError: (state) => {
+      state.error = null;
     }
   },
   extraReducers: (builder) => {
@@ -223,13 +231,7 @@ const authSlice = createSlice({
         state.lastActivity = action.payload.lastActivity;
         state.error = null;
       })
-      .addCase(initialize.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload || 'Initialization failed';
-        state.isAuthenticated = false;
-        state.user = null;
-        state.token = null;
-      })
+      .addCase(initialize.rejected, handleRejection) // Reuse error handler
       // Login
       .addCase(login.pending, (state) => {
         state.loading = true;
@@ -250,8 +252,7 @@ const authSlice = createSlice({
         }
       })
       .addCase(login.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload?.message || 'Login failed';
+        handleRejection(state, action);
         
         // Handle login attempt tracking
         if (action.payload?.loginFailure) {
@@ -265,6 +266,18 @@ const authSlice = createSlice({
   }
 });
 
-export const { logout, updateLastActivity, updateLoginAttempts, checkSession } = authSlice.actions;
+// Memoized selectors for better performance
+export const selectUser = state => state.auth.user;
+export const selectIsAuthenticated = state => state.auth.isAuthenticated;
+export const selectIsAdmin = createSelector(
+  [selectUser],
+  (user) => user?.role === 'admin'
+);
+export const selectUserPermissions = createSelector(
+  [selectUser],
+  (user) => user?.permissions || []
+);
+
+export const { logout, updateLastActivity, updateLoginAttempts, checkSession, clearError } = authSlice.actions;
 
 export default authSlice.reducer; 

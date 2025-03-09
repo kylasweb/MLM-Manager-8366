@@ -1,30 +1,71 @@
-import { Suspense, lazy, useEffect } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Suspense, lazy, memo, useState, useEffect } from 'react';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
-import Layout from './components/Layout';
 import LoadingSpinner from './components/LoadingSpinner';
 import ErrorBoundary from './components/ErrorBoundary';
-import ProtectedRoute from './components/ProtectedRoute';
-import AdminRoute from './components/AdminRoute';
 import useAuth from './hooks/useAuth';
 
-// Lazy load components
-const Landing = lazy(() => import('./pages/Landing'));
-const Login = lazy(() => import('./pages/Login'));
+// Optimized component imports with better code splitting
+const Layout = lazy(() => import('./components/Layout'));
+const ProtectedRoute = lazy(() => import('./components/ProtectedRoute'));
+const AdminRoute = lazy(() => import('./components/AdminRoute'));
+
+// Lazy load components with prefetch and chunking strategy
+const Landing = lazy(() => import(/* webpackPrefetch: true */ './pages/Landing'));
+const Login = lazy(() => import(/* webpackPrefetch: true */ './pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
-const Dashboard = lazy(() => import('./pages/Dashboard'));
-const Network = lazy(() => import('./pages/Network'));
-const Pools = lazy(() => import('./pages/Pools'));
-const Wallet = lazy(() => import('./pages/Wallet'));
-const Investments = lazy(() => import('./pages/Investments'));
-const Profile = lazy(() => import('./pages/Profile'));
-const Referrals = lazy(() => import('./pages/Referrals'));
+
+// Group dashboard-related pages in the same chunk
+const Dashboard = lazy(() => 
+  import('./pages/Dashboard').then(module => {
+    // Prefetch other common pages after dashboard loads
+    import('./pages/Profile');
+    import('./pages/Investments');
+    return module;
+  })
+);
+
+// Group related features together
+const networkFeatures = {
+  Network: lazy(() => import('./pages/Network')),
+  Referrals: lazy(() => import('./pages/Referrals')),
+};
+
+const financialFeatures = {
+  Pools: lazy(() => import('./pages/Pools')),
+  Wallet: lazy(() => import('./pages/Wallet')),
+  Investments: lazy(() => import('./pages/Investments')), 
+  Profile: lazy(() => import('./pages/Profile')),
+};
 
 // Admin pages
 const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
 
-function App() {
-  const { loading } = useAuth();
+// Memoized app component for better performance
+const App = memo(() => {
+  const { loading, isAuthenticated } = useAuth();
+  const location = useLocation();
+  const [prevLocation, setPrevLocation] = useState(location);
+
+  // Prefetch components based on authentication status and current route
+  useEffect(() => {
+    if (location !== prevLocation) {
+      setPrevLocation(location);
+      
+      // Prefetch likely next routes based on current location
+      if (location.pathname === '/') {
+        // From landing, users likely go to login
+        import('./pages/Login');
+      } else if (location.pathname === '/login' && !isAuthenticated) {
+        // From login, might go to register
+        import('./pages/Register');
+      } else if (location.pathname === '/dashboard' && isAuthenticated) {
+        // From dashboard, likely to check profile or investments
+        import('./pages/Profile');
+        import('./pages/Investments');
+      }
+    }
+  }, [location, prevLocation, isAuthenticated]);
 
   if (loading) {
     return <LoadingSpinner />;
@@ -34,32 +75,79 @@ function App() {
     <ErrorBoundary>
       <AnimatePresence mode="wait">
         <Suspense fallback={<LoadingSpinner />}>
-          <Routes>
+          <Routes location={location} key={location.pathname}>
             {/* Public Routes */}
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
 
             {/* Protected User Routes */}
-            <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/investments" element={<Investments />} />
-              <Route path="/network" element={<Network />} />
-              <Route path="/pools" element={<Pools />} />
-              <Route path="/wallet" element={<Wallet />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/referrals" element={<Referrals />} />
+            <Route element={
+              <Suspense fallback={<LoadingSpinner />}>
+                <ProtectedRoute>
+                  <Layout />
+                </ProtectedRoute>
+              </Suspense>
+            }>
+              <Route path="/dashboard" element={
+                <Suspense fallback={<LoadingSpinner />}>
+                  <Dashboard />
+                </Suspense>
+              } />
+              <Route path="/investments" element={
+                <Suspense fallback={<LoadingSpinner />}>
+                  <financialFeatures.Investments />
+                </Suspense>
+              } />
+              <Route path="/network" element={
+                <Suspense fallback={<LoadingSpinner />}>
+                  <networkFeatures.Network />
+                </Suspense>
+              } />
+              <Route path="/pools" element={
+                <Suspense fallback={<LoadingSpinner />}>
+                  <financialFeatures.Pools />
+                </Suspense>
+              } />
+              <Route path="/wallet" element={
+                <Suspense fallback={<LoadingSpinner />}>
+                  <financialFeatures.Wallet />
+                </Suspense>
+              } />
+              <Route path="/profile" element={
+                <Suspense fallback={<LoadingSpinner />}>
+                  <financialFeatures.Profile />
+                </Suspense>
+              } />
+              <Route path="/referrals" element={
+                <Suspense fallback={<LoadingSpinner />}>
+                  <networkFeatures.Referrals />
+                </Suspense>
+              } />
             </Route>
 
             {/* Protected Admin Routes */}
-            <Route path="/admin" element={<AdminRoute><Layout /></AdminRoute>}>
-              <Route index element={<AdminDashboard />} />
+            <Route path="/admin" element={
+              <Suspense fallback={<LoadingSpinner />}>
+                <AdminRoute>
+                  <Layout />
+                </AdminRoute>
+              </Suspense>
+            }>
+              <Route index element={
+                <Suspense fallback={<LoadingSpinner />}>
+                  <AdminDashboard />
+                </Suspense>
+              } />
             </Route>
           </Routes>
         </Suspense>
       </AnimatePresence>
     </ErrorBoundary>
   );
-}
+});
+
+// Display name for debugging
+App.displayName = 'App';
 
 export default App;

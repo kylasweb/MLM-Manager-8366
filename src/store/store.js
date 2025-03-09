@@ -1,42 +1,63 @@
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
-import { persistStore, persistReducer } from 'redux-persist';
+import { 
+  persistStore, 
+  persistReducer,
+  FLUSH,
+  REHYDRATE,
+  PAUSE,
+  PERSIST,
+  PURGE,
+  REGISTER
+} from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 import authReducer from './authSlice';
 
-// Define persist configuration
-const persistConfig = {
-  key: 'root',
+// Define persist configuration - only persist what's necessary
+const authPersistConfig = {
+  key: 'auth',
   storage,
-  whitelist: ['auth'], // only persist auth
+  whitelist: ['token', 'user', 'lastActivity', 'loginAttempts'], // only persist these fields
+  blacklist: ['loading', 'error'], // don't persist these fields
 };
 
 // Combine reducers
 const rootReducer = combineReducers({
-  auth: authReducer,
+  auth: persistReducer(authPersistConfig, authReducer),
   // Add other reducers here as needed
 });
 
-// Create persisted reducer
-const persistedReducer = persistReducer(persistConfig, rootReducer);
-
-// Create store
+// Create store with performance optimizations
 export const store = configureStore({
-  reducer: persistedReducer,
+  reducer: rootReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
-        ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE'],
+        // Ignore these action types for serializable check to improve performance
+        ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
+        // Ignore these field paths for serializable check
+        ignoredPaths: ['auth.lastActivity'],
+      },
+      immutableCheck: { warnAfter: 128 },
+      thunk: {
+        extraArgument: {
+          // You can add extra arguments for thunks here
+        },
       },
     }),
   devTools: process.env.NODE_ENV !== 'production',
 });
 
 // Create persistor
-export const persistor = persistStore(store);
+export const persistor = persistStore(store, {
+  // The following options are to optimize rehydration
+  manualPersist: false,
+});
 
-// Create a hook for session checking
+// Create a hook for session checking with improved performance
 export const setupSessionChecker = () => {
   let intervalId = null;
+  let lastCheck = 0;
+  const CHECK_INTERVAL = 60000; // 1 minute
   
   return {
     startSessionCheck: () => {
@@ -44,10 +65,15 @@ export const setupSessionChecker = () => {
         clearInterval(intervalId);
       }
       
-      // Check session every minute
+      // Check session every minute, but throttle checks
       intervalId = setInterval(() => {
-        store.dispatch({ type: 'auth/checkSession' });
-      }, 60000);
+        const now = Date.now();
+        // Only check if at least CHECK_INTERVAL has passed since last check
+        if (now - lastCheck >= CHECK_INTERVAL) {
+          store.dispatch({ type: 'auth/checkSession' });
+          lastCheck = now;
+        }
+      }, CHECK_INTERVAL);
     },
     stopSessionCheck: () => {
       if (intervalId) {
