@@ -2,7 +2,7 @@
 
 [build]
   publish = "dist"
-  command = "npm run build"
+  command = "chmod +x netlify.sh && ./netlify.sh"
 
 # Asset optimization
 [build.processing]
@@ -73,8 +73,8 @@
   
 # Brotli compression
 [build.environment]
-  NODE_VERSION = "16"
-  NPM_FLAGS = "--no-audit --production"
+  NODE_VERSION = "18.19.0"
+  NPM_FLAGS = "--no-audit"
 
 # Edge functions for global distribution
 [[edge_functions]]
