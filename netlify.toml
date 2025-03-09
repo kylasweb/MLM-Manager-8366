@@ -84,6 +84,7 @@
   function = "country-detect"
   path = "/*"
 
-# CommandBar Plugin Configuration (disabled for now)
-[plugins.inputs]
-  # Empty configuration to avoid errors 
+# Correct CommandBar Plugin syntax
+# Comment out the CommandBar plugin for now until the build is stable
+# [[plugins]]
+#   package = "@commandbar/netlify-plugin-commandbar" 
