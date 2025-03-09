@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zocial MLM - Multi-Level Marketing Platform</title>
+  <meta name="description" content="A powerful Multi-Level Marketing platform for network marketers">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="/favicon.png">
+  
+  <!-- Safe fallback CSS -->
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      background-color: #f8f9fa;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      min-height: 100vh;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    #root {
+      width: 100%;
+      height: 100vh;
+    }
+    
+    .fallback {
+      text-align: center;
+      padding: 2rem;
+      max-width: 600px;
+      margin: 0 auto;
+      display: none;
+    }
+    
+    .fallback h1 {
+      color: #3182ce;
+      margin-bottom: 1rem;
+    }
+    
+    .fallback p {
+      color: #4a5568;
+      margin-bottom: 1.5rem;
+      line-height: 1.6;
+    }
+    
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 5px solid rgba(0, 0, 0, 0.1);
+      border-radius: 50%;
+      border-top-color: #3182ce;
+      margin: 0 auto 2rem;
+      animation: spin 1s ease infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* Show fallback content if app doesn't load within 3 seconds */
+    @media (prefers-reduced-motion: no-preference) {
+      .show-fallback {
+        animation: showFallback 0s 3s forwards;
+      }
+      
+      @keyframes showFallback {
+        to { display: block; }
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  
+  <!-- Fallback content that shows if app doesn't load -->
+  <div class="fallback show-fallback">
+    <div class="spinner"></div>
+    <h1>Zocial MLM Platform</h1>
+    <p>If you're seeing this message, we're having trouble loading the application. Please try refreshing the page.</p>
+    <button onclick="window.location.reload()">Refresh Page</button>
+  </div>
+  
+  <!-- Safe fallback script -->
+  <script>
+    // Check if app is loaded within 5 seconds, otherwise show error
+    setTimeout(function() {
+      if (!window.appLoaded) {
+        document.querySelector('.fallback').style.display = 'block';
+      }
+    }, 5000);
+  </script>
+</body>
+</html> 

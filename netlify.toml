@@ -76,8 +76,14 @@
 [build.environment]
   NODE_VERSION = "18.19.0"
   NPM_FLAGS = "--no-audit"
+  # Temporarily disable CommandBar plugin
+  DISABLE_PLUGIN_COMMANDBAR = "true"
 
 # Edge functions for global distribution
 [[edge_functions]]
   function = "country-detect"
-  path = "/*" 
+  path = "/*"
+
+# CommandBar Plugin Configuration (disabled for now)
+[plugins.inputs]
+  # Empty configuration to avoid errors 

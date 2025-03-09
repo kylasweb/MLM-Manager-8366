@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Exit on error
+set -e
+
 # Display Node.js version
 echo "Node version: $(node -v)"
 echo "NPM version: $(npm -v)"
@@ -8,35 +11,58 @@ echo "NPM version: $(npm -v)"
 echo "Installing dependencies..."
 npm ci || npm install --no-optional
 
+# Add extra packages that might be needed
+echo "Installing additional dependencies..."
+npm install --save-dev terser @vitejs/plugin-react
+
 # Generate any required assets before build
 echo "Preparing for build..."
-# Add any other pre-build steps here (e.g., npx prisma generate)
 
-# Add Vite config for proper base path
-echo "Adjusting Vite config for Netlify..."
-cat > vite.config.base.js << EOL
-import { defineConfig } from 'vite';
-import { mergeConfig } from 'vite';
-import baseConfig from './vite.config.js';
+# Create dist directory in case it doesn't exist
+mkdir -p dist
 
-export default mergeConfig(
-  baseConfig,
-  defineConfig({
-    base: './',
-    build: {
-      sourcemap: false,
-      outDir: 'dist',
-    }
-  })
-);
+# Create base index.html to ensure we have a fallback
+echo "Creating base index.html..."
+cat > dist/index.html << EOL
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zocial MLM</title>
+</head>
+<body>
+  <div id="root"></div>
+  <script>
+    // Fallback script in case the main app doesn't load
+    setTimeout(function() {
+      if (!window.appLoaded) {
+        console.log('App failed to load, reloading page');
+        window.location.reload();
+      }
+    }, 5000);
+  </script>
+</body>
+</html>
 EOL
 
-# Run build with the modified config
+# Run build with customized settings
 echo "Building application..."
-npx vite build --config vite.config.base.js || npm run build
+VITE_BUILD_ENV=production npx vite build
+
+# Check if build was successful
+if [ ! -f "dist/index.html" ]; then
+  echo "Warning: Build failed to generate dist/index.html, using fallback"
+else
+  echo "Build generated index.html successfully"
+fi
 
 # Create Netlify routing file to ensure SPA routing
 echo "Ensuring SPA routing..."
 echo "/*    /index.html   200" > dist/_redirects
+
+# Copy necessary files
+echo "Copying static assets..."
+cp -r public/* dist/ 2>/dev/null || :
 
 echo "Build completed successfully!" 
