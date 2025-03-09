@@ -1,28 +1,76 @@
-import { useEffect, useCallback } from 'react';
-import { wsService } from '../services/websocket';
-import { useAuthContext } from '../contexts/AuthContext';
+import { useEffect, useRef, useState, useCallback } from 'react';
+import useAuth from './useAuth';
 
-export const useWebSocket = (channel, callback) => {
-  const { token } = useAuthContext();
+const WS_URL = 'wss://api.example.com/ws';
 
-  useEffect(() => {
-    if (token) {
-      wsService.connect(token);
-    }
-    return () => wsService.disconnect();
+export const useWebSocket = () => {
+  const { token } = useAuth();
+  const [isConnected, setIsConnected] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const socketRef = useRef(null);
+
+  const connect = useCallback(() => {
+    if (!token) return;
+
+    const socket = new WebSocket(`${WS_URL}?token=${token}`);
+    socketRef.current = socket;
+
+    socket.onopen = () => {
+      console.log('WebSocket connected');
+      setIsConnected(true);
+    };
+
+    socket.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        setMessages((prev) => [...prev, data]);
+      } catch (error) {
+        console.error('Failed to parse WebSocket message:', error);
+      }
+    };
+
+    socket.onclose = () => {
+      console.log('WebSocket disconnected');
+      setIsConnected(false);
+      
+      // Attempt to reconnect after 5 seconds
+      setTimeout(() => {
+        if (socketRef.current?.readyState === WebSocket.CLOSED) {
+          connect();
+        }
+      }, 5000);
+    };
+
+    socket.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+
+    return () => {
+      socket.close();
+    };
   }, [token]);
 
-  useEffect(() => {
-    if (channel && callback) {
-      return wsService.subscribe(channel, callback);
-    }
-  }, [channel, callback]);
-
   const sendMessage = useCallback((message) => {
-    if (wsService.ws && wsService.ws.readyState === WebSocket.OPEN) {
-      wsService.ws.send(JSON.stringify(message));
+    if (socketRef.current?.readyState === WebSocket.OPEN) {
+      socketRef.current.send(JSON.stringify(message));
+    } else {
+      console.error('WebSocket is not connected');
     }
   }, []);
 
-  return { sendMessage };
+  useEffect(() => {
+    const cleanup = connect();
+    return () => {
+      cleanup?.();
+      if (socketRef.current) {
+        socketRef.current.close();
+      }
+    };
+  }, [connect]);
+
+  return {
+    isConnected,
+    messages,
+    sendMessage
+  };
 };

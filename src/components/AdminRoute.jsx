@@ -1,8 +1,8 @@
 import { Navigate } from 'react-router-dom';
-import { useAuthContext } from '../contexts/AuthContext';
+import useAuth from '../hooks/useAuth';
 
 function AdminRoute({ children }) {
-  const { user } = useAuthContext();
+  const { user } = useAuth();
   
   if (!user || user.role !== 'admin') {
     return <Navigate to="/" />;

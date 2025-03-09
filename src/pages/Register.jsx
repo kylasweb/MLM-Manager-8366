@@ -1,24 +1,38 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useAuthContext } from '../contexts/AuthContext';
+import useAuth from '../hooks/useAuth';
 
 function Register() {
-  const [formData, setFormData] = useState({
+  const [userData, setUserData] = useState({
     name: '',
     email: '',
     password: '',
     confirmPassword: '',
     referralCode: ''
   });
-  
-  const { register } = useAuthContext();
+  const [errors, setErrors] = useState({});
   const navigate = useNavigate();
-
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate form
+    const validationErrors = {};
+    if (!userData.name) validationErrors.name = 'Name is required';
+    if (!userData.email) validationErrors.email = 'Email is required';
+    if (!userData.password) validationErrors.password = 'Password is required';
+    if (userData.password !== userData.confirmPassword) {
+      validationErrors.confirmPassword = 'Passwords do not match';
+    }
+    
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+    
     try {
-      await register(formData);
+      await useAuth.register(userData);
       navigate('/dashboard');
     } catch (error) {
       console.error('Registration failed:', error);
@@ -49,11 +63,12 @@ function Register() {
                 required
                 className="appearance-none rounded relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
                 placeholder="Full Name"
-                value={formData.name}
+                value={userData.name}
                 onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
+                  setUserData({ ...userData, name: e.target.value })
                 }
               />
+              {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
             </div>
             <div>
               <label htmlFor="email" className="sr-only">
@@ -66,11 +81,12 @@ function Register() {
                 required
                 className="appearance-none rounded relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
                 placeholder="Email address"
-                value={formData.email}
+                value={userData.email}
                 onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
+                  setUserData({ ...userData, email: e.target.value })
                 }
               />
+              {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
             </div>
             <div>
               <label htmlFor="password" className="sr-only">
@@ -83,11 +99,12 @@ function Register() {
                 required
                 className="appearance-none rounded relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
                 placeholder="Password"
-                value={formData.password}
+                value={userData.password}
                 onChange={(e) =>
-                  setFormData({ ...formData, password: e.target.value })
+                  setUserData({ ...userData, password: e.target.value })
                 }
               />
+              {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
             </div>
             <div>
               <label htmlFor="confirmPassword" className="sr-only">
@@ -100,11 +117,12 @@ function Register() {
                 required
                 className="appearance-none rounded relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
                 placeholder="Confirm Password"
-                value={formData.confirmPassword}
+                value={userData.confirmPassword}
                 onChange={(e) =>
-                  setFormData({ ...formData, confirmPassword: e.target.value })
+                  setUserData({ ...userData, confirmPassword: e.target.value })
                 }
               />
+              {errors.confirmPassword && <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>}
             </div>
             <div>
               <label htmlFor="referralCode" className="sr-only">
@@ -116,9 +134,9 @@ function Register() {
                 type="text"
                 className="appearance-none rounded relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
                 placeholder="Referral Code (Optional)"
-                value={formData.referralCode}
+                value={userData.referralCode}
                 onChange={(e) =>
-                  setFormData({ ...formData, referralCode: e.target.value })
+                  setUserData({ ...userData, referralCode: e.target.value })
                 }
               />
             </div>

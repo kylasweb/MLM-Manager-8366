@@ -1,4 +1,4 @@
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import Layout from './components/Layout';
@@ -6,6 +6,7 @@ import LoadingSpinner from './components/LoadingSpinner';
 import ErrorBoundary from './components/ErrorBoundary';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
+import useAuth from './hooks/useAuth';
 
 // Lazy load components
 const Landing = lazy(() => import('./pages/Landing'));
@@ -22,10 +23,8 @@ const Referrals = lazy(() => import('./pages/Referrals'));
 // Admin pages
 const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
 
-import { useAuthContext } from './contexts/AuthContext';
-
 function App() {
-  const { loading } = useAuthContext();
+  const { loading } = useAuth();
 
   if (loading) {
     return <LoadingSpinner />;

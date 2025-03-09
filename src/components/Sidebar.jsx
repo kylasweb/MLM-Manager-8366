@@ -1,62 +1,79 @@
-import { NavLink } from 'react-router-dom';
-import { useAuthContext } from '../contexts/AuthContext';
-import {
-  FaHome,
-  FaMoneyBillWave,
-  FaNetworkWired,
-  FaSwimmingPool,
-  FaWallet,
-  FaUsers,
-  FaCog
+import { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { 
+  FaHome, 
+  FaChartLine, 
+  FaUsers, 
+  FaWallet, 
+  FaUserCircle, 
+  FaShareAlt,
+  FaLayerGroup
 } from 'react-icons/fa';
+import useAuth from '../hooks/useAuth';
 
-function Sidebar() {
-  const { user } = useAuthContext();
-  const isAdmin = user?.role === 'admin';
+const Sidebar = () => {
+  const { user } = useAuth();
+  const location = useLocation();
+  const [collapsed, setCollapsed] = useState(false);
 
-  const userLinks = [
-    { to: '/dashboard', icon: FaHome, label: 'Dashboard' },
-    { to: '/investments', icon: FaMoneyBillWave, label: 'Investments' },
-    { to: '/network', icon: FaNetworkWired, label: 'Network' },
-    { to: '/pools', icon: FaSwimmingPool, label: 'Pools' },
-    { to: '/wallet', icon: FaWallet, label: 'Wallet' },
+  const isActive = (path) => location.pathname === path;
+
+  const navItems = [
+    { path: '/dashboard', icon: <FaHome />, label: 'Dashboard' },
+    { path: '/investments', icon: <FaChartLine />, label: 'Investments' },
+    { path: '/network', icon: <FaUsers />, label: 'Network' },
+    { path: '/pools', icon: <FaLayerGroup />, label: 'Pools' },
+    { path: '/wallet', icon: <FaWallet />, label: 'Wallet' },
+    { path: '/referrals', icon: <FaShareAlt />, label: 'Referrals' },
+    { path: '/profile', icon: <FaUserCircle />, label: 'Profile' },
   ];
 
-  const adminLinks = [
-    { to: '/admin', icon: FaHome, label: 'Dashboard' },
-    { to: '/admin/users', icon: FaUsers, label: 'Users' },
-    { to: '/admin/investments', icon: FaMoneyBillWave, label: 'Investment Plans' },
-    { to: '/admin/pools', icon: FaSwimmingPool, label: 'Pool Management' },
-    { to: '/admin/finance', icon: FaCog, label: 'Finance Management' },
-  ];
-
-  const links = isAdmin ? adminLinks : userLinks;
+  // Add admin items if user is admin
+  if (user?.role === 'admin') {
+    navItems.push(
+      { path: '/admin', icon: <FaUserCircle />, label: 'Admin' }
+    );
+  }
 
   return (
-    <div className="w-64 bg-white shadow-lg">
-      <div className="h-full px-3 py-4 overflow-y-auto">
+    <div 
+      className={`bg-white shadow-md h-screen transition-all duration-300 ${
+        collapsed ? 'w-16' : 'w-64'
+      }`}
+    >
+      <div className="p-4 flex justify-between items-center">
+        {!collapsed && <h1 className="text-xl font-bold text-primary-600">MLM Platform</h1>}
+        <button 
+          onClick={() => setCollapsed(!collapsed)}
+          className="p-2 rounded-full hover:bg-gray-100"
+        >
+          {collapsed ? '→' : '←'}
+        </button>
+      </div>
+      
+      <nav className="mt-8">
         <ul className="space-y-2">
-          {links.map((link) => (
-            <li key={link.to}>
-              <NavLink
-                to={link.to}
-                className={({ isActive }) =>
-                  `flex items-center p-2 text-base font-normal rounded-lg ${
-                    isActive
-                      ? 'bg-primary-100 text-primary-900'
-                      : 'text-gray-900 hover:bg-gray-100'
-                  }`
-                }
+          {navItems.map((item) => (
+            <li key={item.path}>
+              <Link
+                to={item.path}
+                className={`flex items-center p-3 ${
+                  collapsed ? 'justify-center' : 'px-4'
+                } ${
+                  isActive(item.path)
+                    ? 'bg-primary-100 text-primary-600'
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`}
               >
-                <link.icon className="w-6 h-6 transition duration-75" />
-                <span className="ml-3">{link.label}</span>
-              </NavLink>
+                <span className="text-xl">{item.icon}</span>
+                {!collapsed && <span className="ml-3">{item.label}</span>}
+              </Link>
             </li>
           ))}
         </ul>
-      </div>
+      </nav>
     </div>
   );
-}
+};
 
 export default Sidebar;
