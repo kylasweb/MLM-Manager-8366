@@ -2,7 +2,13 @@ import { useState, useEffect } from 'react';
 import { getPerformanceReport } from '../utils/performanceMonitor';
 import './PerformanceDashboard.css';
 
+// Only enable in development
+const isDev = process.env.NODE_ENV === 'development';
+
 function PerformanceDashboard() {
+  // Don't render anything in production
+  if (!isDev) return null;
+  
   const [report, setReport] = useState(null);
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -10,8 +16,12 @@ function PerformanceDashboard() {
 
   useEffect(() => {
     const fetchReport = () => {
-      const performanceReport = getPerformanceReport();
-      setReport(performanceReport);
+      try {
+        const performanceReport = getPerformanceReport();
+        setReport(performanceReport);
+      } catch (error) {
+        console.error('Error fetching performance report:', error);
+      }
     };
 
     fetchReport();

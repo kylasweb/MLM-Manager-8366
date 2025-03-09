@@ -4,7 +4,11 @@ import { AnimatePresence } from 'framer-motion';
 import LoadingSpinner from './components/LoadingSpinner';
 import ErrorBoundary from './components/ErrorBoundary';
 import useAuth from './hooks/useAuth';
-import PerformanceDashboard from './components/PerformanceDashboard';
+
+// Only import Performance Dashboard in development
+const PerformanceDashboard = process.env.NODE_ENV === 'development' 
+  ? lazy(() => import('./components/PerformanceDashboard'))
+  : () => null;
 
 // Import Login directly to avoid lazy loading issues
 import Login from './pages/Login';
@@ -147,8 +151,8 @@ const App = memo(() => {
         </Suspense>
       </AnimatePresence>
       
-      {/* Performance Dashboard */}
-      {process.env.NODE_ENV !== 'production' && <PerformanceDashboard />}
+      {/* Performance Dashboard - only in development */}
+      {process.env.NODE_ENV === 'development' && <PerformanceDashboard />}
     </ErrorBoundary>
   );
 });

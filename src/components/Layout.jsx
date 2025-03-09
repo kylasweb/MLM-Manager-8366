@@ -1,11 +1,11 @@
 import { Outlet } from 'react-router-dom';
-import { useTheme } from '../contexts/ThemeContext';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
 import Footer from './Footer';
 import useAuth from '../hooks/useAuth';
 import { trackPagePerformance } from '../utils/performanceMonitor';
 import { useEffect } from 'react';
+import { useTheme } from '../contexts/ThemeContext';
 
 function Layout() {
   const { darkMode } = useTheme();
@@ -22,11 +22,11 @@ function Layout() {
   }, [endTracking]);
 
   return (
-    <div className={`min-h-screen ${darkMode ? 'dark bg-dark-bg' : 'bg-gray-100'}`}>
+    <div className={`flex flex-col min-h-screen ${darkMode ? 'dark-mode' : ''}`}>
       <Navbar />
-      <div className="flex">
+      <div className="flex flex-1">
         <Sidebar />
-        <main className="flex-1 p-6">
+        <main className="flex-1 p-4">
           <Outlet />
         </main>
       </div>

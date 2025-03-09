@@ -3,6 +3,9 @@
  * Tracks component render times, network requests, and resource usage
  */
 
+// Only enable in development
+const isDev = process.env.NODE_ENV === 'development';
+
 // Store performance metrics
 const metrics = {
   components: {},
@@ -14,8 +17,8 @@ const metrics = {
 
 // Configuration
 const config = {
-  enabled: true,
-  logToConsole: true,
+  enabled: isDev, // Only enable in development
+  logToConsole: isDev,
   threshold: 50, // ms - log renders taking longer than this
   longTaskThreshold: 50 // ms
 };
@@ -81,11 +84,13 @@ export const initPerformanceMonitoring = () => {
   }
   
   // Expose metrics globally for debugging
-  window.__PERFORMANCE_METRICS__ = metrics;
-  window.__TOGGLE_PERFORMANCE_LOGGING__ = (enabled) => {
-    config.logToConsole = enabled;
-    console.log(`[Performance] Console logging ${enabled ? 'enabled' : 'disabled'}`);
-  };
+  if (window) {
+    window.__PERFORMANCE_METRICS__ = metrics;
+    window.__TOGGLE_PERFORMANCE_LOGGING__ = (enabled) => {
+      config.logToConsole = enabled;
+      console.log(`[Performance] Console logging ${enabled ? 'enabled' : 'disabled'}`);
+    };
+  }
 };
 
 /**
@@ -204,28 +209,35 @@ export const trackPagePerformance = (pageName) => {
 export const getPerformanceReport = () => {
   if (!config.enabled) return { enabled: false };
   
-  const sortedComponents = Object.entries(metrics.components)
-    .map(([name, data]) => ({ name, ...data }))
-    .sort((a, b) => b.averageTime - a.averageTime);
-  
-  const sortedPages = Object.entries(metrics.pages)
-    .map(([name, data]) => ({ name, ...data }))
-    .sort((a, b) => b.averageRenderTime - a.averageRenderTime);
-  
-  return {
-    enabled: true,
-    timestamp: new Date().toISOString(),
-    summary: {
-      componentsTracked: Object.keys(metrics.components).length,
-      pagesTracked: Object.keys(metrics.pages).length,
-      networkRequestsTracked: metrics.network.length,
-      longTasksDetected: metrics.longTasks.length
-    },
-    slowestComponents: sortedComponents.slice(0, 5),
-    slowestPages: sortedPages.slice(0, 5),
-    recentLongTasks: metrics.longTasks.slice(-5)
-  };
+  try {
+    const sortedComponents = Object.entries(metrics.components)
+      .map(([name, data]) => ({ name, ...data }))
+      .sort((a, b) => b.averageTime - a.averageTime);
+    
+    const sortedPages = Object.entries(metrics.pages)
+      .map(([name, data]) => ({ name, ...data }))
+      .sort((a, b) => b.averageRenderTime - a.averageRenderTime);
+    
+    return {
+      enabled: true,
+      timestamp: new Date().toISOString(),
+      summary: {
+        componentsTracked: Object.keys(metrics.components).length,
+        pagesTracked: Object.keys(metrics.pages).length,
+        networkRequestsTracked: metrics.network.length,
+        longTasksDetected: metrics.longTasks.length
+      },
+      slowestComponents: sortedComponents.slice(0, 5),
+      slowestPages: sortedPages.slice(0, 5),
+      recentLongTasks: metrics.longTasks.slice(-5)
+    };
+  } catch (error) {
+    console.error('[Performance] Error generating report:', error);
+    return { enabled: false, error: error.message };
+  }
 };
 
-// Initialize on import
-initPerformanceMonitoring(); 
+// Initialize only in development
+if (isDev) {
+  initPerformanceMonitoring();
+} 
