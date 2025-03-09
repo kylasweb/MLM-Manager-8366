@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Application Reset</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h1 {
+      color: #d32f2f;
+      border-bottom: 2px solid #eee;
+      padding-bottom: 10px;
+    }
+    .card {
+      background: #f9f9f9;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    button {
+      background: #d32f2f;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 5px;
+    }
+    button:hover {
+      background: #b71c1c;
+    }
+    .warning {
+      color: #d32f2f;
+      font-weight: bold;
+    }
+    .note {
+      font-size: 0.9em;
+      color: #666;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <h1>Application Reset Utility</h1>
+  
+  <p>This page helps you recover from application freezes or persistent errors.</p>
+  
+  <div class="card">
+    <h2>Reset Application Data</h2>
+    <p>Use this option to clear saved application data and return to a clean state.</p>
+    <p class="warning">Warning: This will log you out and remove all locally saved preferences.</p>
+    <button onclick="resetAppData()">Reset Application Data</button>
+  </div>
+  
+  <div class="card">
+    <h2>Clear Browser Cache</h2>
+    <p>If the application is still having issues after data reset, try clearing the cache.</p>
+    <button onclick="clearCache()">Clear Cache & Reload</button>
+  </div>
+  
+  <div class="card">
+    <h2>Full Factory Reset</h2>
+    <p class="warning">Warning: This will remove ALL application data and completely reset the application.</p>
+    <button onclick="factoryReset()">Factory Reset</button>
+  </div>
+  
+  <p class="note">If you continue experiencing issues after these steps, please contact support.</p>
+  
+  <script>
+    // Function to clear localStorage
+    function resetAppData() {
+      localStorage.clear();
+      sessionStorage.clear();
+      alert('Application data has been reset. The page will now reload.');
+      window.location.href = '/';
+    }
+    
+    // Function to clear browser cache and reload
+    function clearCache() {
+      if ('caches' in window) {
+        caches.keys().then(function(keyList) {
+          return Promise.all(keyList.map(function(key) {
+            return caches.delete(key);
+          }));
+        });
+        
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        alert('Cache cleared. The page will now hard reload.');
+        window.location.href = '/?clearcache=' + Date.now();
+      } else {
+        alert('Cache API not available in your browser. Please clear cache manually from browser settings.');
+      }
+    }
+    
+    // Function to perform a complete reset
+    function factoryReset() {
+      if (confirm('Are you sure you want to perform a factory reset? This will remove ALL application data.')) {
+        // Clear all storage
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        // Clear caches
+        if ('caches' in window) {
+          caches.keys().then(function(keyList) {
+            return Promise.all(keyList.map(function(key) {
+              return caches.delete(key);
+            }));
+          });
+        }
+        
+        // Clear cookies
+        document.cookie.split(';').forEach(function(c) {
+          document.cookie = c.trim().split('=')[0] + '=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;';
+        });
+        
+        alert('Factory reset complete. The application will now reload.');
+        window.location.href = '/?reset=' + Date.now();
+      }
+    }
+  </script>
+</body>
+</html> 

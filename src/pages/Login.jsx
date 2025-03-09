@@ -1,34 +1,64 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
 import { toast } from 'react-toastify';
 
+// Debug flag
+const DEBUG = true;
+
 function Login() {
+  if (DEBUG) console.log('Login component rendering');
+
   const [credentials, setCredentials] = useState({ email: '', password: '' });
   const [isLoading, setIsLoading] = useState(false);
   const { login, error, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
-  // Redirect if already authenticated
+  // Redirect if already authenticated - use callback to avoid unnecessary rerenders
   useEffect(() => {
+    if (DEBUG) console.log('Login useEffect - auth check', { isAuthenticated });
+    
     if (isAuthenticated) {
-      navigate('/dashboard');
+      if (DEBUG) console.log('User authenticated, navigating to dashboard');
+      // Use setTimeout to avoid potential navigation issues
+      setTimeout(() => navigate('/dashboard'), 0);
     }
   }, [isAuthenticated, navigate]);
 
-  const handleSubmit = async (e) => {
+  // Memoize handler to avoid recreation on every render
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
+    
+    if (DEBUG) console.log('Login form submitted');
+    
     setIsLoading(true);
     try {
+      if (DEBUG) console.log('Attempting login with:', { email: credentials.email });
       await login(credentials);
       // Navigation will be handled by the useEffect
+      if (DEBUG) console.log('Login successful');
     } catch (err) {
       console.error('Login failed:', err);
-      toast.error(err.message || 'Login failed. Please try again.');
+      toast.error(err?.message || 'Login failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [credentials, login]);
+
+  // Safe input change handler
+  const handleInputChange = useCallback((e) => {
+    const { name, value } = e.target;
+    setCredentials(prev => ({ ...prev, [name]: value }));
+  }, []);
+
+  // Simple check if component is rendering
+  useEffect(() => {
+    if (DEBUG) console.log('Login component mounted');
+    
+    return () => {
+      if (DEBUG) console.log('Login component unmounting');
+    };
+  }, []);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -53,9 +83,8 @@ function Login() {
                 className="appearance-none rounded relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
                 placeholder="Email address"
                 value={credentials.email}
-                onChange={(e) =>
-                  setCredentials({ ...credentials, email: e.target.value })
-                }
+                onChange={handleInputChange}
+                disabled={isLoading}
               />
             </div>
             <div>
@@ -70,9 +99,8 @@ function Login() {
                 className="appearance-none rounded relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
                 placeholder="Password"
                 value={credentials.password}
-                onChange={(e) =>
-                  setCredentials({ ...credentials, password: e.target.value })
-                }
+                onChange={handleInputChange}
+                disabled={isLoading}
               />
             </div>
           </div>
