@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import useAuth from '../hooks/useAuth';
 import { toast } from 'react-toastify';
@@ -7,19 +7,25 @@ import { toast } from 'react-toastify';
 function Login() {
   const [credentials, setCredentials] = useState({ email: '', password: '' });
   const [isLoading, setIsLoading] = useState(false);
-  const { login, error } = useAuth();
+  const { login, error, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     try {
       await login(credentials);
-      navigate('/dashboard');
-    } catch (error) {
-      console.error('Login failed:', error);
-      toast.error(error.message || 'Login failed. Please try again.');
-    } finally {
+      // Navigation will be handled by the useEffect above after auth state updates
+    } catch (err) {
+      console.error('Login failed:', err);
+      toast.error(err.message || 'Login failed. Please try again.');
       setIsLoading(false);
     }
   };
@@ -83,6 +89,12 @@ function Login() {
           >
             {isLoading ? 'Signing in...' : 'Sign in'}
           </button>
+          
+          <div className="text-center mt-4">
+            <Link to="/register" className="text-primary-600 hover:text-primary-700">
+              Don't have an account? Sign up
+            </Link>
+          </div>
         </form>
       </div>
     </motion.div>

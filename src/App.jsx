@@ -73,7 +73,7 @@ const App = memo(() => {
 
   return (
     <ErrorBoundary>
-      <AnimatePresence mode="wait">
+      <AnimatePresence mode="wait" initial={false}>
         <Suspense fallback={<LoadingSpinner />}>
           <Routes location={location} key={location.pathname}>
             {/* Public Routes */}
