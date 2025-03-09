@@ -1,0 +1,116 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// MLM User Model
+model User {
+  id               String     @id @default(uuid())
+  auth0Id          String     @unique
+  email            String     @unique
+  username         String     @unique
+  fullName         String
+  profilePicture   String?
+  phoneNumber      String?
+  address          String?
+  bio              String?
+  status           String     @default("active") // active, inactive, suspended
+  roles            String[]   @default(["member"]) // member, admin, etc.
+  level            String     @default("starter") // starter, bronze, silver, gold, etc.
+  referralCode     String     @unique
+  
+  // MLM specific fields
+  sponsor          User?      @relation("Sponsorship", fields: [sponsorId], references: [id])
+  sponsorId        String?
+  downline         User[]     @relation("Sponsorship")
+  
+  // Commission settings
+  directCommission Float      @default(10)
+  levelCommissions Json       @default("[5, 3, 1]") // Array of percentages for each level
+  payoutThreshold  Float      @default(50)
+  
+  // Related records
+  transactions     Transaction[]
+  commissions      Commission[]
+  
+  // Timestamps
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+}
+
+// Transaction Model (sales, purchases, etc.)
+model Transaction {
+  id          String      @id @default(uuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+  amount      Float
+  type        String      @default("sale") // sale, purchase, refund, etc.
+  status      String      @default("completed") // completed, pending, failed, etc.
+  description String?
+  metadata    Json?       // Additional transaction data
+  commissions Commission[]
+  
+  // Timestamps
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+// Commission Model
+model Commission {
+  id                String      @id @default(uuid())
+  userId            String
+  user              User        @relation(fields: [userId], references: [id])
+  transactionId     String
+  transaction       Transaction @relation(fields: [transactionId], references: [id])
+  amount            Float
+  percentage        Float
+  type              String      @default("direct") // direct, level, etc.
+  level             Int         @default(0) // 0 for direct, 1+ for levels
+  status            String      @default("pending") // pending, paid, cancelled
+  paymentReference  String?
+  paymentNotes      String?
+  notes             String?
+  
+  // Timestamps
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  paidAt            DateTime?
+}
+
+// Content Reference Model
+// This links to Contentful content for MLM materials
+model ContentReference {
+  id            String    @id @default(uuid())
+  contentfulId  String    @unique
+  contentType   String    // Matches Contentful content type
+  title         String
+  description   String?
+  locale        String    @default("en-US")
+  section       String    @default("default")
+  
+  // Timestamps
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// Settings Model
+model Settings {
+  id            String    @id @default(uuid())
+  key           String    @unique
+  value         Json
+  description   String?
+  
+  // Timestamps
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
