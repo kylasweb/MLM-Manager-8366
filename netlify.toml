@@ -65,11 +65,12 @@
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
-# Redirects for SPA
+# Special SPA configuration
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+  force = true
   
 # Brotli compression
 [build.environment]

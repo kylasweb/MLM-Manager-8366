@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import useAuth from '../hooks/useAuth';
 import { toast } from 'react-toastify';
 
@@ -13,7 +12,7 @@ function Login() {
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/dashboard', { replace: true });
+      navigate('/dashboard');
     }
   }, [isAuthenticated, navigate]);
 
@@ -22,21 +21,17 @@ function Login() {
     setIsLoading(true);
     try {
       await login(credentials);
-      // Navigation will be handled by the useEffect above after auth state updates
+      // Navigation will be handled by the useEffect
     } catch (err) {
       console.error('Login failed:', err);
       toast.error(err.message || 'Login failed. Please try again.');
+    } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="min-h-screen flex items-center justify-center bg-gray-50"
-    >
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow">
         <h2 className="text-3xl font-bold text-center text-gray-900">
           Sign in to your account
@@ -97,7 +92,7 @@ function Login() {
           </div>
         </form>
       </div>
-    </motion.div>
+    </div>
   );
 }
 

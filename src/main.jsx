@@ -1,6 +1,6 @@
 import { StrictMode, lazy, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
+import { HashRouter } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { store, persistor } from './store/store';
@@ -25,6 +25,14 @@ const AppLoading = () => (
   </div>
 );
 
+// Error boundary for lazy loading
+const ErrorFallback = () => (
+  <div className="error-boundary">
+    <h2>Something went wrong loading the application.</h2>
+    <button onClick={() => window.location.reload()}>Reload</button>
+  </div>
+);
+
 // Create root with concurrent mode
 const root = createRoot(document.getElementById('root'));
 
@@ -34,7 +42,7 @@ root.render(
     <Provider store={store}>
       <PersistGate loading={<AppLoading />} persistor={persistor}>
         <Suspense fallback={<AppLoading />}>
-          <BrowserRouter>
+          <HashRouter>
             <ThemeProvider>
               <App />
               <ToastContainer
@@ -50,7 +58,7 @@ root.render(
                 theme="colored"
               />
             </ThemeProvider>
-          </BrowserRouter>
+          </HashRouter>
         </Suspense>
       </PersistGate>
     </Provider>

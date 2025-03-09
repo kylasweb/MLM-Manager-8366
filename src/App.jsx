@@ -5,6 +5,9 @@ import LoadingSpinner from './components/LoadingSpinner';
 import ErrorBoundary from './components/ErrorBoundary';
 import useAuth from './hooks/useAuth';
 
+// Import Login directly to avoid lazy loading issues
+import Login from './pages/Login';
+
 // Optimized component imports with better code splitting
 const Layout = lazy(() => import('./components/Layout'));
 const ProtectedRoute = lazy(() => import('./components/ProtectedRoute'));
@@ -12,7 +15,6 @@ const AdminRoute = lazy(() => import('./components/AdminRoute'));
 
 // Lazy load components with prefetch and chunking strategy
 const Landing = lazy(() => import(/* webpackPrefetch: true */ './pages/Landing'));
-const Login = lazy(() => import(/* webpackPrefetch: true */ './pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 
 // Group dashboard-related pages in the same chunk
