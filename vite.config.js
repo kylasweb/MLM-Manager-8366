@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import path from 'path';
+import { resolve } from 'path';
 import { visualizer } from 'rollup-plugin-visualizer';
 import viteCompression from 'vite-plugin-compression';
 
@@ -24,8 +24,8 @@ export default defineConfig({
   base: './',
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src')
-    }
+      '@': resolve(__dirname, 'src'),
+    },
   },
   esbuild: {
     jsxInject: `import React from 'react'`, // Avoid React imports in every file
@@ -41,7 +41,8 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: false, // Disable sourcemaps in production
+    emptyOutDir: true,
+    sourcemap: true,
     minify: 'terser',
     terserOptions: {
       compress: {
@@ -78,9 +79,14 @@ export default defineConfig({
     target: 'es2015'
   },
   server: {
-    open: true,
     port: 3000,
-    cors: true
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8888/.netlify/functions',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+    },
   },
   preview: {
     port: 8080
